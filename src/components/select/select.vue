@@ -635,6 +635,8 @@
             },
             updateSlotOptions(){
                 this.slotOptions = this.$slots.default;
+                this.query = '';
+                this.focusIndex = -1;
             },
             checkUpdateStatus() {
                 if (this.getInitialValue().length > 0 && this.selectOptions.length === 0) {
