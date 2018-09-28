@@ -53,7 +53,7 @@
                 v-show="dropVisible"
                 :placement="placement"
                 ref="dropdown"
-                :data-transfer="transfer"
+                :transfer="transfer"
                 v-transfer-dom
             >
                 <ul v-show="showNotFoundLabel" :class="[prefixCls + '-not-found']"><li>{{ localeNotFoundText }}</li></ul>
@@ -254,6 +254,7 @@
                 unchangedQuery: true,
                 hasExpectedValue: false,
                 preventRemoteCall: false,
+                isInput: false,
             };
         },
         computed: {
@@ -355,12 +356,17 @@
                         });
                     });
                 }
+                /**
+                 * Not sure why use hasDefaultSelected #4273
+                 * */
+                // let hasDefaultSelected = slotOptions.some(option => this.query === option.key);
                 for (let option of slotOptions) {
 
                     const cOptions = option.componentOptions;
                     if (!cOptions) continue;
                     if (cOptions.tag.match(optionGroupRegexp)){
                         let children = cOptions.children;
+
                         // remove filtered children
                         if (this.filterable){
                             children = children.filter(
@@ -377,8 +383,11 @@
                         if (cOptions.children.length > 0) selectOptions.push({...option});
                     } else {
                         // ignore option if not passing filter
-                        const optionPassesFilter = this.filterable ? this.validateOption(cOptions) : option;
-                        if (!optionPassesFilter) continue;
+                        if (this.isInput) {
+                            const optionPassesFilter = this.filterable ? this.validateOption(cOptions) : option;
+                            if (!optionPassesFilter) continue;
+                        }
+
                         optionCounter = optionCounter + 1;
                         selectOptions.push(this.processOption(option, selectedValues, optionCounter === currentIndex));
                     }
@@ -456,7 +465,7 @@
             },
 
             validateOption({children, elm, propsData}){
-                if (this.queryStringMatchesSelectedOption) return true;
+                if (this.queryStringMatchesSelectedOption && !this.isInput) return true;
 
                 const value = propsData.value;
                 const label = propsData.label || '';
@@ -468,7 +477,6 @@
                 const query = this.query.toLowerCase().trim();
                 return stringValues.toLowerCase().includes(query);
             },
-
             toggleMenu (e, force) {
                 if (this.disabled) {
                     return false;
@@ -522,6 +530,7 @@
                 this.focusIndex = -1;
                 this.unchangedQuery = true;
                 this.values = [];
+                this.isInput = false;
             },
             handleKeydown (e) {
                 if (e.key === 'Backspace'){
@@ -621,9 +630,13 @@
                     if (!this.autoComplete) this.$nextTick(() => inputField.focus());
                 }
                 this.broadcast('Drop', 'on-update-popper');
+                setTimeout(() => {
+                  this.isInput = false;
+                },300)
             },
             onQueryChange(query) {
                 if (query.length > 0 && query !== this.query) this.visible = true;
+                this.isInput = true;
                 this.query = query;
                 this.unchangedQuery = this.visible;
             },
@@ -647,7 +660,6 @@
         watch: {
             value(value){
                 const {getInitialValue, getOptionData, publicValue} = this;
-
                 this.checkUpdateStatus();
 
                 if (value === '') this.values = [];
