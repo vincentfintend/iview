@@ -53,6 +53,7 @@
                 v-show="dropVisible"
                 :placement="placement"
                 ref="dropdown"
+                :data-transfer="transfer"
                 :transfer="transfer"
                 v-transfer-dom
             >
@@ -465,7 +466,7 @@
             },
 
             validateOption({children, elm, propsData}){
-                if (this.queryStringMatchesSelectedOption && !this.isInput) return true;
+                // if (this.queryStringMatchesSelectedOption) return true;
 
                 const value = propsData.value;
                 const label = propsData.label || '';
